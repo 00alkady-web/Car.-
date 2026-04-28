@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>استمارة فحص مركبة - حفظ متكامل</title>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/dist/cropper.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/dist/cropper.min.css" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #e9ecef; font-family: 'Traditional Arabic', 'Tahoma', 'Segoe UI', Arial; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    .a4-page { width: 210mm; min-height: 297mm; background: white; margin: 0 auto 30px auto; padding: 6mm 6mm 10mm 6mm; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
+    .box { border: 1.5px solid #1a3a5f; border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
+    .box-title { background: #1a3a5f; color: white; padding: 4px 6px; font-size: 14px; font-weight: 800; text-align: center; }
+    .identity-item { border: 1px solid #1a3a5f; border-radius: 5px; padding: 4px; }
+    
+    body.transport-style .box { border-color: #b02a37; }
+    body.transport-style .box-title { background: #b02a37; }
+    body.transport-style .identity-item { border-color: #b02a37; }
+    body.transport-style .plate-type-box { background-color: #dc3545; border-color: #b02a37; color: white; }
+    body.transport-style .plate-main-box { border-color: #b02a37; }
+    body.transport-style .plate-small-box { border-color: #b02a37; }
+    body.transport-style .plate-big-number { color: #b02a37; }
+    
+    .plate-container { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+    .plate-main-box { border: 1.5px solid #1a3a5f; border-radius: 6px; padding: 4px 6px; display: inline-flex; align-items: center; gap: 3px; background: white; }
+    .plate-small-box { width: 30px; height: 36px; border: 1.5px solid #1a3a5f; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; background: #f9f9f9; }
+    .plate-big-number { font-size: 26px; font-weight: 800; margin: 0 2px; color: #1a3a5f; }
+    .plate-type-box { padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 13px; text-align: center; background-color: #007bff; color: white; border: 1px solid #007bff; min-width: 70px; }
+    
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; border-bottom: 2px solid black; padding-bottom: 5px; flex-wrap: wrap; }
+    .right-header { text-align: right; font-size: 13px; font-weight: 800; line-height: 1.4; }
+    .right-header img { margin-top: 3px; max-width: 130px; max-height: 80px; border: 1px solid #ccc; border-radius: 5px; object-fit: cover; }
+    .center-header { text-align: center; position: relative; }
+    .center-header img { width: 50px; height: 50px; }
+    .validity-box { margin-top: 4px; font-size: 9px; background: #f8f9fa; padding: 2px 5px; border-radius: 4px; text-align: center; font-weight: 700; }
+    .qrcode-container { position: absolute; left: 0; top: 45px; width: 50px; height: 50px; }
+    .left-header { text-align: left; font-size: 10px; font-weight: 700; }
+    .personal-photo { width: 100px; height: 100px; border: 2px solid black; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; background: #f5f5f5; }
+    .personal-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .serial-numbers { font-size: 9px; margin-top: 2px; line-height: 1.3; font-weight: 700; }
+    .box-content { padding: 6px; }
+    .form-row { display: flex; flex-wrap: wrap; margin-bottom: 5px; gap: 5px; }
+    .field-group { flex: 1; min-width: 100px; }
+    .field-group label { display: block; font-weight: 700; font-size: 10px; margin-bottom: 1px; }
+    .field-group .field-value { border-bottom: 1px solid black; min-height: 20px; font-size: 11px; font-weight: 700; padding: 0 3px; }
+    .row { display: flex; flex-wrap: wrap; margin-bottom: 5px; gap: 5px; }
+    .field-item { flex: 1; min-width: 90px; }
+    .field-item label { display: block; font-weight: 700; font-size: 10px; margin-bottom: 1px; }
+    .field-item .item-value { border-bottom: 1px solid black; min-height: 20px; font-size: 11px; font-weight: 700; padding: 0 3px; }
+    .vin-section { margin: 4px 0; }
+    .vin-label { font-weight: 700; font-size: 11px; margin-bottom: 3px; }
+    .vin-container { display: flex; flex-direction: row; flex-wrap: wrap; gap: 2px; margin-top: 2px; justify-content: flex-start; direction: ltr; }
+    .vin-box { width: 26px; height: 26px; border: 1.5px solid black; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; background: #f9f9f9; }
+    .identity-container { display: flex; gap: 6px; flex-wrap: wrap; }
+    .identity-item { flex: 1; padding: 3px; }
+    .identity-item h4 { background: #eef2f7; padding: 2px; text-align: center; margin-bottom: 3px; font-size: 11px; font-weight: 800; }
+    .identity-item .field-item { margin-bottom: 3px; }
+    .identity-item .field-item label { font-size: 9px; font-weight: 700; }
+    .identity-item .field-item .item-value { min-height: 18px; font-size: 10px; font-weight: 700; }
+    .footer-sigs { display: flex; justify-content: space-between; margin-top: 20px; text-align: center; direction: ltr; }
+    .sig { width: 30%; font-size: 11px; font-weight: 700; text-align: center; }
+    .sig-line { border-top: 1px solid black; margin-top: 8px; width: 80%; margin-left: auto; margin-right: auto; }
+    .buttons { text-align: center; margin: 15px auto; }
+    button { padding: 6px 12px; margin: 4px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px; }
+    .btn-create { background: #28a745; color: white; }
+    .btn-print { background: #007bff; color: white; }
+    .btn-img { background: #17a2b8; color: white; }
+    .btn-archive { background: #6c757d; color: white; }
+    .btn-export { background: #ffc107; color: black; }
+    .btn-nav { background: #17a2b8; color: white; }
+    .archive-section { width: 210mm; background: white; padding: 6px; margin-top: 10px; }
+    .search-box { margin-bottom: 6px; display: flex; gap: 5px; flex-wrap: wrap; }
+    .search-box input { flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 5px; font-size: 11px; }
+    .search-box button { padding: 5px 8px; background: #007bff; color: white; font-weight: 700; font-size: 11px; }
+    .search-options { display: flex; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; }
+    .search-options button { background: #e9ecef; color: #333; border: 1px solid #ccc; padding: 3px 6px; font-size: 10px; font-weight: 700; }
+    .search-options button.active { background: #007bff; color: white; border-color: #007bff; }
+    .archive-actions { display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+    .archive-navigation { background: #eef2f7; padding: 6px; border-radius: 6px; margin-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 3px; font-size: 9px; font-weight: 700; }
+    .crop-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; padding: 20px; }
+    .crop-container { background: #2c2c2c; max-width: 95%; max-height: 95%; margin: auto; padding: 20px; border-radius: 15px; text-align: center; }
+    .crop-container img { max-width: 100%; max-height: 70vh; display: block; margin: 0 auto; }
+    .crop-buttons { margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .crop-buttons button { padding: 10px 20px; font-size: 14px; font-weight: 700; }
+    .crop-title { color: white; margin-bottom: 15px; font-size: 18px; font-weight: 800; }
+    @media print { body { background: white; padding: 0; margin: 0; } .buttons, .archive-section, .no-print { display: none; } .a4-page { box-shadow: none; margin: 0; padding: 5mm; width: 100%; height: auto; } }
+  </style>
+</head>
+<body>
+
+<div id="printArea">
+  <div class="a4-page" id="formPage">
+    <div class="header">
+      <div class="right-header">
+        الجمهورية اليمنية<br>وزارة الداخلية<br>إدارة مرور تعز<br>لجنة ترقيم الجمارك
+        <div id="numberImageContainer"><img id="numberImagePreview" src="" style="display:none; max-width:130px; max-height:80px; object-fit:cover;"></div>
+      </div>
+      <div class="center-header">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23gold' stroke='black' stroke-width='2'/%3E%3Cpath d='M50 20 L60 45 L85 45 L65 60 L75 85 L50 70 L25 85 L35 60 L15 45 L40 45 Z' fill='black'/%3E%3C/svg%3E" alt="شعار اليمن">
+        <div class="plate-container">
+          <div class="plate-main-box" id="plateMainBox">
+            <div id="plateBox1" class="plate-small-box">0</div>
+            <div id="plateBox2" class="plate-small-box">0</div>
+            <div id="plateBox3" class="plate-small-box">0</div>
+            <div id="plateBox4" class="plate-small-box">0</div>
+            <div id="plateBox5" class="plate-small-box">0</div>
+            <span class="plate-big-number" id="plateBigNumber">4</span>
+          </div>
+          <div id="plateTypeBox" class="plate-type-box">خصوصي</div>
+        </div>
+        <div class="validity-box"><div>📅 الإصدار: <span id="issueDate">_____</span></div><div>⏰ الانتهاء: <span id="expiryDate">_____</span></div></div>
+        <div id="qrcode" class="qrcode-container"></div>
+      </div>
+      <div class="left-header">
+        <div class="personal-photo" id="personalPhotoBox"><img id="personalPhotoPreview" src="" style="display:none;"><span id="noPhotoText" style="font-size:9px; color:gray;">صورة شخصية</span></div>
+        <div class="serial-numbers"><div>رقم تسلسلي: <span id="serialNumber">_____</span></div><div>رقم الاستمارة: <span id="formNumber">_____</span></div></div>
+      </div>
+    </div>
+
+    <div class="box"><div class="box-title">■ البيانات الشخصية والعنوان</div><div class="box-content">
+      <div class="form-row"><div class="field-group"><label>الاسم الرباعي:</label><div class="field-value" id="show_fullName"></div></div><div class="field-group"><label>رقم الهاتف:</label><div class="field-value" id="show_phone"></div></div></div>
+      <div class="form-row"><div class="field-group"><label>تاريخ الميلاد:</label><div class="field-value" id="show_dob"></div></div><div class="field-group"><label>فصيلة الدم:</label><div class="field-value" id="show_bloodType"></div></div><div class="field-group"><label>نوع الهوية:</label><div class="field-value" id="show_idType"></div></div></div>
+      <div class="form-row"><div class="field-group"><label>رقم الهوية:</label><div class="field-value" id="show_idNumber"></div></div><div class="field-group"><label>مكان الإصدار:</label><div class="field-value" id="show_issuePlace"></div></div></div>
+      <div class="form-row"><div class="field-group"><label>العنوان الحالي:</label><div class="field-value" id="show_currentAddress"></div></div></div>
+    </div></div>
+
+    <div class="box"><div class="box-title">■ البيانات الفنية للمركبة</div><div class="box-content">
+      <div class="row"><div class="field-item"><label>الماركة:</label><div class="item-value" id="show_brand"></div></div><div class="field-item"><label>نوع المركبة:</label><div class="item-value" id="show_vehicleType"></div></div><div class="field-item"><label>الشكل:</label><div class="item-value" id="show_shape"></div></div></div>
+      <div class="row"><div class="field-item"><label>اللون:</label><div class="item-value" id="show_color"></div></div><div class="field-item"><label>سنة الصنع:</label><div class="item-value" id="show_year"></div></div><div class="field-item"><label>الطراز:</label><div class="item-value" id="show_style"></div></div></div>
+      <div class="vin-section"><div class="vin-label">رقم القاعدة (VIN):</div><div id="vinBoxes" class="vin-container"></div></div>
+      <div class="row"><div class="field-item"><label>رقم المحرك:</label><div class="item-value" id="show_engine"></div></div><div class="field-item"><label>نوع الوقود:</label><div class="item-value" id="show_fuel"></div></div><div class="field-item"><label>عدد الأسطوانات:</label><div class="item-value" id="show_cylinders"></div></div></div>
+      <div class="row"><div class="field-item"><label>رقم البيان الجمركي:</label><div class="item-value" id="show_customs"></div></div><div class="field-item"><label>جهة إصدار البيان:</label><div class="item-value" id="show_customsIssuer"></div></div></div>
+    </div></div>
+
+    <div class="box"><div class="box-title">■ بيانات المعرفين</div><div class="box-content"><div class="identity-container">
+      <div class="identity-item"><h4>المعرف الأول</h4>
+        <div class="field-item"><label>الاسم:</label><div class="item-value" id="show_name1"></div></div>
+        <div class="field-item"><label>الرقم الوطني:</label><div class="item-value" id="show_nationalId1"></div></div>
+        <div class="field-item"><label>نوع القرابة:</label><div class="item-value" id="show_relation1"></div></div>
+        <div class="field-item"><label>رقم الهاتف:</label><div class="item-value" id="show_phone1"></div></div>
+        <div class="field-item"><label>العنوان:</label><div class="item-value" id="show_address1"></div></div>
+      </div>
+      <div class="identity-item"><h4>المعرف الثاني</h4>
+        <div class="field-item"><label>الاسم:</label><div class="item-value" id="show_name2"></div></div>
+        <div class="field-item"><label>الرقم الوطني:</label><div class="item-value" id="show_nationalId2"></div></div>
+        <div class="field-item"><label>نوع القرابة:</label><div class="item-value" id="show_relation2"></div></div>
+        <div class="field-item"><label>رقم الهاتف:</label><div class="item-value" id="show_phone2"></div></div>
+        <div class="field-item"><label>العنوان:</label><div class="item-value" id="show_address2"></div></div>
+      </div>
+    </div></div></div>
+
+    <div class="footer-sigs">
+      <div class="sig">مدير الإصدار الآلي<div class="sig-line"></div></div>
+      <div class="sig">رئيس القسم الفني<div class="sig-line"></div></div>
+      <div class="sig">المختص الفني<div class="sig-line"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="buttons no-print">
+  <button class="btn-create" onclick="openInputPanel()">📝 إدخال البيانات</button>
+  <button class="btn-print" onclick="window.print()">🖨️ طباعة</button>
+  <button class="btn-img" onclick="saveAsImage()">📸 حفظ كصورة (A4)</button>
+  <button class="btn-archive" onclick="saveToArchive()">💾 حفظ للأرشيف</button>
+</div>
+
+<div id="inputPanel" style="display:none; background:white; width:210mm; margin:20px auto; padding:8px; border:2px solid #1a3a5f; border-radius:8px;">
+  <h3 style="text-align:center;">📋 إدخال البيانات</h3>
+  <div style="background:#f0f0f0; padding:5px; margin-bottom:8px; border-radius:6px;">
+    <h4>🚗 رقم اللوحة والنوع</h4>
+    <div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;">
+      <span>أرقام اللوحة (5 أرقام):</span>
+      <input type="text" id="in_plateNumbers" placeholder="00123" style="width:90px;" maxlength="5">
+      <select id="in_plateType" style="padding:3px;">
+        <option value="private">خصوصي</option>
+        <option value="transport">نقل</option>
+      </select>
+    </div>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:5px;">
+    <input type="text" id="in_fullName" placeholder="الاسم الرباعي">
+    <input type="tel" id="in_phone" placeholder="رقم الهاتف" maxlength="9">
+    <input type="text" id="in_dob" placeholder="تاريخ الميلاد">
+    <input type="text" id="in_bloodType" placeholder="فصيلة الدم">
+    <input type="text" id="in_idType" placeholder="نوع الهوية">
+    <input type="text" id="in_idNumber" placeholder="رقم الهوية">
+    <input type="text" id="in_issuePlace" placeholder="مكان الإصدار">
+    <input type="text" id="in_currentAddress" placeholder="العنوان الحالي">
+    <input type="text" id="in_brand" placeholder="الماركة">
+    <input type="text" id="in_vehicleType" placeholder="نوع المركبة">
+    <input type="text" id="in_shape" placeholder="الشكل">
+    <input type="text" id="in_color" placeholder="اللون">
+    <input type="text" id="in_year" placeholder="سنة الصنع">
+    <input type="text" id="in_style" placeholder="الطراز">
+    <input type="text" id="in_vin" placeholder="VIN (17 حرف)" maxlength="17">
+    <input type="text" id="in_engine" placeholder="رقم المحرك">
+    <input type="text" id="in_fuel" placeholder="نوع الوقود">
+    <input type="text" id="in_cylinders" placeholder="عدد الأسطوانات">
+    <input type="text" id="in_customs" placeholder="رقم البيان الجمركي">
+    <input type="text" id="in_customsIssuer" placeholder="جهة إصدار البيان">
+    <input type="text" id="in_name1" placeholder="المعرف الأول - الاسم">
+    <input type="text" id="in_nationalId1" placeholder="الرقم الوطني">
+    <select id="in_relation1" style="padding:3px;">
+      <option value="">-- نوع القرابة --</option>
+      <option value="أب">أب</option><option value="أم">أم</option><option value="أخ">أخ</option><option value="أخت">أخت</option>
+      <option value="ابن">ابن</option><option value="بنت">بنت</option><option value="زوج">زوج</option><option value="زوجة">زوجة</option>
+      <option value="عم">عم</option><option value="خال">خال</option><option value="جد">جد</option><option value="جدة">جدة</option>
+      <option value="حفيد">حفيد</option><option value="نسيب">نسيب</option><option value="قريب">قريب</option><option value="صديق">صديق</option>
+    </select>
+    <input type="tel" id="in_phone1" placeholder="رقم الهاتف" maxlength="9">
+    <input type="text" id="in_address1" placeholder="العنوان">
+    <input type="text" id="in_name2" placeholder="المعرف الثاني - الاسم">
+    <input type="text" id="in_nationalId2" placeholder="الرقم الوطني">
+    <select id="in_relation2" style="padding:3px;">
+      <option value="">-- نوع القرابة --</option>
+      <option value="أب">أب</option><option value="أم">أم</option><option value="أخ">أخ</option><option value="أخت">أخت</option>
+      <option value="ابن">ابن</option><option value="بنت">بنت</option><option value="زوج">زوج</option><option value="زوجة">زوجة</option>
+      <option value="عم">عم</option><option value="خال">خال</option><option value="جد">جد</option><option value="جدة">جدة</option>
+      <option value="حفيد">حفيد</option><option value="نسيب">نسيب</option><option value="قريب">قريب</option><option value="صديق">صديق</option>
+    </select>
+    <input type="tel" id="in_phone2" placeholder="رقم الهاتف" maxlength="9">
+    <input type="text" id="in_address2" placeholder="العنوان">
+  </div>
+  <div style="margin:5px 0;"><label>📸 صورة اللوحة: </label><input type="file" id="in_numberImage" accept="image/*" onchange="openCropModal(this.files[0], 'number', 1.6)"></div>
+  <div style="margin:5px 0;"><label>📸 الصورة الشخصية: </label><input type="file" id="in_personalPhoto" accept="image/*" onchange="openCropModal(this.files[0], 'personal', 1)"></div>
+  <div style="margin:5px 0;"><label>📅 تاريخ الانتهاء: </label><input type="date" id="in_expiryDate"></div>
+  <div style="text-align:center;"><button onclick="updateForm()" style="background:#28a745;">تحديث الاستمارة</button><button onclick="closeInputPanel()">إغلاق</button></div>
+</div>
+
+<div id="cropModal" class="crop-modal">
+  <div class="crop-container">
+    <div class="crop-title">✂️ قص الصورة</div>
+    <img id="cropImage" src="">
+    <div class="crop-buttons">
+      <button onclick="rotateImage(-90)">🔄 تدوير يسار</button>
+      <button onclick="rotateImage(90)">🔄 تدوير يمين</button>
+      <button onclick="flipImage('horizontal')">↔️ قلب أفقي</button>
+      <button onclick="flipImage('vertical')">↕️ قلب عمودي</button>
+      <button onclick="resetCropper()">🔄 إعادة تعيين</button>
+      <button onclick="cropImage()" style="background:#28a745;">✅ حفظ</button>
+      <button onclick="closeCropModal()" style="background:#dc3545;">❌ إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="archive-section no-print">
+  <h3>📂 التنقل بين الاستمارات</h3>
+  <div class="archive-navigation">
+    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+      <button onclick="previousForm()" class="btn-nav">◀ السابق</button>
+      <select id="archiveSelect" onchange="selectFormFromList()" style="flex:1; padding: 5px; border-radius: 5px;">
+        <option value="">-- اختر استمارة --</option>
+      </select>
+      <button onclick="nextForm()" class="btn-nav">التالي ▶</button>
+    </div>
+    <div id="currentIndexDisplay" style="margin-top: 4px; font-size: 10px; color: #666;"></div>
+  </div>
+
+  <h3>📂 البحث في الأرشيف</h3>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="🔍 بحث...">
+    <button onclick="searchArchive()">🔍 بحث</button>
+    <button onclick="clearSearch()">🗑️ مسح</button>
+  </div>
+  <div class="search-options">
+    <button id="searchPlateBtn" onclick="setSearchType('plate')" class="active">🚗 اللوحة</button>
+    <button id="searchNameBtn" onclick="setSearchType('name')">👤 المالك</button>
+    <button id="searchIdBtn" onclick="setSearchType('id')">🆔 الهوية</button>
+  </div>
+
+  <div class="archive-actions">
+    <button class="btn-export" onclick="exportArchive()">📁 تصدير</button>
+    <label for="importFileInput" class="btn-import" style="display: inline-block; padding: 5px 10px; background: #17a2b8; color: white; border-radius: 5px; cursor: pointer;">📂 استيراد</label>
+    <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importArchive(this)">
+  </div>
+  <div id="archiveList">جاري التحميل...</div>
+  <button onclick="deleteAllArchive()" style="background:#dc3545; color:white; margin-top:5px;">🗑️ مسح الكل</button>
+</div>
+
+<script>
+  let allArchiveData = [];
+  let currentCropper = null;
+  let currentImageType = null;
+  let currentAspectRatio = null;
+  let currentIndex = 0;
+  let archiveList = [];
+  let searchType = 'plate';
+  
+  // متغيرات لتخزين الصور المقصوصة (Base64)
+  let currentNumberImage = '';
+  let currentPersonalImage = '';
+
+  function setSearchType(type) {
+    searchType = type;
+    ['searchPlateBtn', 'searchNameBtn', 'searchIdBtn'].forEach(id => document.getElementById(id).classList.remove('active'));
+    if (type === 'plate') document.getElementById('searchPlateBtn').classList.add('active');
+    else if (type === 'name') document.getElementById('searchNameBtn').classList.add('active');
+    else if (type === 'id') document.getElementById('searchIdBtn').classList.add('active');
+    document.getElementById('searchInput').placeholder = type === 'plate' ? '🔍 بحث برقم اللوحة' : (type === 'name' ? '🔍 بحث باسم المالك' : '🔍 بحث برقم الهوية');
+  }
+
+  function openInputPanel() { document.getElementById('inputPanel').style.display = 'block'; window.scrollTo({ top: document.getElementById('inputPanel').offsetTop - 20 }); }
+  function closeInputPanel() { document.getElementById('inputPanel').style.display = 'none'; }
+
+  // تحويل الصورة المقصوصة إلى Base64
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function openCropModal(file, type, aspectRatio) {
+    if (!file) return;
+    currentImageType = type;
+    currentAspectRatio = aspectRatio;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = document.getElementById('cropImage');
+      img.src = e.target.result;
+      document.getElementById('cropModal').style.display = 'flex';
+      if (currentCropper) currentCropper.destroy();
+      currentCropper = new Cropper(img, { viewMode: 2, dragMode: 'move', aspectRatio: aspectRatio || NaN, cropBoxMovable: true, cropBoxResizable: true, movable: true, zoomable: true, rotatable: true, scalable: true, zoomOnWheel: true });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function rotateImage(degree) { if (currentCropper) currentCropper.rotate(degree); }
+  function flipImage(direction) { if (currentCropper) { if (direction === 'horizontal') currentCropper.scaleX(-currentCropper.getData().scaleX || -1); else if (direction === 'vertical') currentCropper.scaleY(-currentCropper.getData().scaleY || -1); } }
+  function resetCropper() { if (currentCropper) currentCropper.reset(); }
+  
+  async function cropImage() {
+    if (currentCropper) {
+      const canvas = currentCropper.getCroppedCanvas();
+      canvas.toBlob(async (blob) => {
+        const base64 = await blobToBase64(blob);
+        if (currentImageType === 'number') {
+          currentNumberImage = base64;
+          document.getElementById('numberImagePreview').src = base64;
+          document.getElementById('numberImagePreview').style.display = 'block';
+        } else if (currentImageType === 'personal') {
+          currentPersonalImage = base64;
+          document.getElementById('personalPhotoPreview').src = base64;
+          document.getElementById('personalPhotoPreview').style.display = 'block';
+          document.getElementById('noPhotoText').style.display = 'none';
+        }
+        closeCropModal();
+      }, 'image/jpeg', 0.95);
+    }
+  }
+  function closeCropModal() { document.getElementById('cropModal').style.display = 'none'; if (currentCropper) { currentCropper.destroy(); currentCropper = null; } }
+
+  function generateQRCode(fn, pn, id) { let qr = document.getElementById('qrcode'); qr.innerHTML = ''; new QRCode(qr, { text: `رقم الاستمارة: ${fn}\nرقم اللوحة: ${pn}\nتاريخ الإصدار: ${id}`, width: 50, height: 50 }); }
+
+  function updatePlateDisplay() {
+    let nums = document.getElementById('in_plateNumbers').value, type = document.getElementById('in_plateType').value;
+    let digits = nums.padStart(5, '0').split('');
+    for (let i = 0; i < 5; i++) document.getElementById(`plateBox${i+1}`).innerText = digits[i] || '0';
+    let full = '4/' + (nums || '00000');
+    let box = document.getElementById('plateTypeBox'), body = document.body;
+    if (type === 'private') { box.innerText = 'خصوصي'; box.style.backgroundColor = '#007bff'; body.classList.remove('transport-style'); }
+    else { box.innerText = 'نقل'; box.style.backgroundColor = '#dc3545'; body.classList.add('transport-style'); }
+    return full;
+  }
+
+  function renderVinBoxes(vin) {
+    let container = document.getElementById('vinBoxes'); container.innerHTML = '';
+    let chars = vin ? vin.split('') : [];
+    for (let i = 0; i < 17; i++) { let b = document.createElement('div'); b.className = 'vin-box'; b.innerText = chars[i] || '□'; container.appendChild(b); }
+  }
+
+  function updateForm() {
+    let vin = document.getElementById('in_vin').value || ''; renderVinBoxes(vin); let plate = updatePlateDisplay();
+    document.getElementById('show_fullName').innerText = document.getElementById('in_fullName').value || '';
+    document.getElementById('show_phone').innerText = document.getElementById('in_phone').value || '';
+    document.getElementById('show_dob').innerText = document.getElementById('in_dob').value || '';
+    document.getElementById('show_bloodType').innerText = document.getElementById('in_bloodType').value || '';
+    document.getElementById('show_idType').innerText = document.getElementById('in_idType').value || '';
+    document.getElementById('show_idNumber').innerText = document.getElementById('in_idNumber').value || '';
+    document.getElementById('show_issuePlace').innerText = document.getElementById('in_issuePlace').value || '';
+    document.getElementById('show_currentAddress').innerText = document.getElementById('in_currentAddress').value || '';
+    document.getElementById('show_brand').innerText = document.getElementById('in_brand').value || '';
+    document.getElementById('show_vehicleType').innerText = document.getElementById('in_vehicleType').value || '';
+    document.getElementById('show_shape').innerText = document.getElementById('in_shape').value || '';
+    document.getElementById('show_color').innerText = document.getElementById('in_color').value || '';
+    document.getElementById('show_year').innerText = document.getElementById('in_year').value || '';
+    document.getElementById('show_style').innerText = document.getElementById('in_style').value || '';
+    document.getElementById('show_engine').innerText = document.getElementById('in_engine').value || '';
+    document.getElementById('show_fuel').innerText = document.getElementById('in_fuel').value || '';
+    document.getElementById('show_cylinders').innerText = document.getElementById('in_cylinders').value || '';
+    document.getElementById('show_customs').innerText = document.getElementById('in_customs').value || '';
+    document.getElementById('show_customsIssuer').innerText = document.getElementById('in_customsIssuer').value || '';
+    document.getElementById('show_name1').innerText = document.getElementById('in_name1').value || '';
+    document.getElementById('show_nationalId1').innerText = document.getElementById('in_nationalId1').value || '';
+    document.getElementById('show_relation1').innerText = document.getElementById('in_relation1').value || '';
+    document.getElementById('show_phone1').innerText = document.getElementById('in_phone1').value || '';
+    document.getElementById('show_address1').innerText = document.getElementById('in_address1').value || '';
+    document.getElementById('show_name2').innerText = document.getElementById('in_name2').value || '';
+    document.getElementById('show_nationalId2').innerText = document.getElementById('in_nationalId2').value || '';
+    document.getElementById('show_relation2').innerText = document.getElementById('in_relation2').value || '';
+    document.getElementById('show_phone2').innerText = document.getElementById('in_phone2').value || '';
+    document.getElementById('show_address2').innerText = document.getElementById('in_address2').value || '';
+    
+    if (currentNumberImage) { document.getElementById('numberImagePreview').src = currentNumberImage; document.getElementById('numberImagePreview').style.display = 'block'; }
+    if (currentPersonalImage) { document.getElementById('personalPhotoPreview').src = currentPersonalImage; document.getElementById('personalPhotoPreview').style.display = 'block'; document.getElementById('noPhotoText').style.display = 'none'; }
+    
+    let now = new Date(), today = now.toLocaleDateString(); document.getElementById('issueDate').innerText = today;
+    let expiry = document.getElementById('in_expiryDate').value;
+    let expiryStr = expiry || (() => { let ny = new Date(now); ny.setFullYear(now.getFullYear() + 1); return ny.toLocaleDateString(); })();
+    document.getElementById('expiryDate').innerText = expiryStr;
+    let sn = Math.floor(Math.random() * 1000000), fn = 'ST-' + now.getFullYear() + '-' + Math.floor(Math.random() * 999);
+    document.getElementById('serialNumber').innerText = sn; document.getElementById('formNumber').innerText = fn;
+    generateQRCode(fn, plate, today); closeInputPanel(); alert('تم تحديث الاستمارة');
+  }
+
+  function saveAsImage() {
+    html2canvas(document.getElementById('formPage'), { scale: 2.5, backgroundColor: '#ffffff', useCORS: true }).then(canvas => {
+      let link = document.createElement('a'); link.download = `استمارة_A4_${new Date().toLocaleDateString()}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click(); alert('✅ تم حفظ الاستمارة');
+    }).catch(() => alert('حدث خطأ'));
+  }
+
+  async function saveToArchive() {
+    let archive = JSON.parse(localStorage.getItem('officialArchive')) || [];
+    
+    // جمع جميع البيانات
+    let record = {
+      id: Date.now(),
+      savedAt: new Date().toLocaleString(),
+      // البيانات الشخصية
+      fullName: document.getElementById('show_fullName').innerText,
+      phone: document.getElementById('show_phone').innerText,
+      dob: document.getElementById('show_dob').innerText,
+      bloodType: document.getElementById('show_bloodType').innerText,
+      idType: document.getElementById('show_idType').innerText,
+      idNumber: document.getElementById('show_idNumber').innerText,
+      issuePlace: document.getElementById('show_issuePlace').innerText,
+      currentAddress: document.getElementById('show_currentAddress').innerText,
+      // بيانات المركبة
+      brand: document.getElementById('show_brand').innerText,
+      vehicleType: document.getElementById('show_vehicleType').innerText,
+      shape: document.getElementById('show_shape').innerText,
+      color: document.getElementById('show_color').innerText,
+      year: document.getElementById('show_year').innerText,
+      style: document.getElementById('show_style').innerText,
+      vin: document.getElementById('in_vin').value || '',
+      engine: document.getElementById('show_engine').innerText,
+      fuel: document.getElementById('show_fuel').innerText,
+      cylinders: document.getElementById('show_cylinders').innerText,
+      customs: document.getElementById('show_customs').innerText,
+      customsIssuer: document.getElementById('show_customsIssuer').innerText,
+      // المعرفين
+      name1: document.getElementById('show_name1').innerText,
+      nationalId1: document.getElementById('show_nationalId1').innerText,
+      relation1: document.getElementById('show_relation1').innerText,
+      phone1: document.getElementById('show_phone1').innerText,
+      address1: document.getElementById('show_address1').innerText,
+      name2: document.getElementById('show_name2').innerText,
+      nationalId2: document.getElementById('show_nationalId2').innerText,
+      relation2: document.getElementById('show_relation2').innerText,
+      phone2: document.getElementById('show_phone2').innerText,
+      address2: document.getElementById('show_address2').innerText,
+      // اللوحة والنوع
+      plateNumbers: document.getElementById('in_plateNumbers').value,
+      plateType: document.getElementById('in_plateType').value,
+      // الصور (Base64)
+      numberImage: currentNumberImage,
+      personalImage: currentPersonalImage,
+      // التواريخ
+      issueDate: document.getElementById('issueDate').innerText,
+      expiryDate: document.getElementById('expiryDate').innerText,
+      serialNumber: document.getElementById('serialNumber').innerText,
+      formNumber: document.getElementById('formNumber').innerText
+    };
+    
+    archive.unshift(record);
+    localStorage.setItem('officialArchive', JSON.stringify(archive));
+    loadArchive();
+    alert('تم حفظ الاستمارة مع الصور');
+  }
+
+  function restoreForm(index) {
+    let archive = JSON.parse(localStorage.getItem('officialArchive')) || [];
+    if (archive[index]) {
+      let data = archive[index];
+      
+      // استعادة البيانات الشخصية
+      document.getElementById('show_fullName').innerText = data.fullName || '';
+      document.getElementById('show_phone').innerText = data.phone || '';
+      document.getElementById('show_dob').innerText = data.dob || '';
+      document.getElementById('show_bloodType').innerText = data.bloodType || '';
+      document.getElementById('show_idType').innerText = data.idType || '';
+      document.getElementById('show_idNumber').innerText = data.idNumber || '';
+      document.getElementById('show_issuePlace').innerText = data.issuePlace || '';
+      document.getElementById('show_currentAddress').innerText = data.currentAddress || '';
+      
+      // استعادة بيانات المركبة
+      document.getElementById('show_brand').innerText = data.brand || '';
+      document.getElementById('show_vehicleType').innerText = data.vehicleType || '';
+      document.getElementById('show_shape').innerText = data.shape || '';
+      document.getElementById('show_color').innerText = data.color || '';
+      document.getElementById('show_year').innerText = data.year || '';
+      document.getElementById('show_style').innerText = data.style || '';
+      document.getElementById('in_vin').value = data.vin || '';
+      document.getElementById('show_engine').innerText = data.engine || '';
+      document.getElementById('show_fuel').innerText = data.fuel || '';
+      document.getElementById('show_cylinders').innerText = data.cylinders || '';
+      document.getElementById('show_customs').innerText = data.customs || '';
+      document.getElementById('show_customsIssuer').innerText = data.customsIssuer || '';
+      
+      // استعادة المعرفين
+      document.getElementById('show_name1').innerText = data.name1 || '';
+      document.getElementById('show_nationalId1').innerText = data.nationalId1 || '';
+      document.getElementById('show_relation1').innerText = data.relation1 || '';
+      document.getElementById('show_phone1').innerText = data.phone1 || '';
+      document.getElementById('show_address1').innerText = data.address1 || '';
+      document.getElementById('show_name2').innerText = data.name2 || '';
+      document.getElementById('show_nationalId2').innerText = data.nationalId2 || '';
+      document.getElementById('show_relation2').innerText = data.relation2 || '';
+      document.getElementById('show_phone2').innerText = data.phone2 || '';
+      document.getElementById('show_address2').innerText = data.address2 || '';
+      
+      // استعادة اللوحة والنوع
+      document.getElementById('in_plateNumbers').value = data.plateNumbers || '';
+      document.getElementById('in_plateType').value = data.plateType || 'private';
+      
+      // استعادة الصور
+      if (data.numberImage) {
+        currentNumberImage = data.numberImage;
+        document.getElementById('numberImagePreview').src = data.numberImage;
+        document.getElementById('numberImagePreview').style.display = 'block';
+      }
+      if (data.personalImage) {
+        currentPersonalImage = data.personalImage;
+        document.getElementById('personalPhotoPreview').src = data.personalImage;
+        document.getElementById('personalPhotoPreview').style.display = 'block';
+        document.getElementById('noPhotoText').style.display = 'none';
+      }
+      
+      // استعادة التواريخ
+      document.getElementById('issueDate').innerText = data.issueDate || '_____';
+      document.getElementById('expiryDate').innerText = data.expiryDate || '_____';
+      document.getElementById('serialNumber').innerText = data.serialNumber || '_____';
+      document.getElementById('formNumber').innerText = data.formNumber || '_____';
+      
+      // إعادة بناء VIN
+      renderVinBoxes(data.vin || '');
+      
+      // إعادة بناء اللوحة
+      let digits = (data.plateNumbers || '00000').padStart(5, '0').split('');
+      for (let i = 0; i < 5; i++) document.getElementById(`plateBox${i+1}`).innerText = digits[i];
+      
+      // إعادة بناء نوع المركبة واللون
+      let plateType = data.plateType || 'private';
+      let box = document.getElementById('plateTypeBox');
+      let body = document.body;
+      if (plateType === 'private') {
+        box.innerText = 'خصوصي';
+        box.style.backgroundColor = '#007bff';
+        body.classList.remove('transport-style');
+      } else {
+        box.innerText = 'نقل';
+        box.style.backgroundColor = '#dc3545';
+        body.classList.add('transport-style');
+      }
+      
+      // إعادة بناء QR Code
+      generateQRCode(data.formNumber || '_____', '4/' + (data.plateNumbers || '00000'), data.issueDate || '_____');
+      
+      alert('✅ تم استرجاع الاستمارة بالكامل مع الصور');
+    } else {
+      alert('لا يمكن استرجاع هذه الاستمارة');
+    }
+  }
+
+  function loadArchive() {
+    let archive = JSON.parse(localStorage.getItem('officialArchive')) || [];
+    allArchiveData = archive; archiveList = archive;
+    let container = document.getElementById('archiveList');
+    if (!archive.length) { container.innerHTML = '<p>لا توجد استمارات</p>'; return; }
+    let html = '<td><th>التاريخ</th><th>رقم اللوحة</th><th>اسم المالك</th><th>رقم الهوية</th><th>استرجاع</th></tr>';
+    archive.forEach((item, idx) => { html += `<tr>晚${item.savedAt}㠯晚${item.plateNumbers ? '4/'+item.plateNumbers : '-'}㠯晚${item.fullName || '-'}㠯晚${item.idNumber || '-'}㠯/<button onclick="restoreForm(${idx})">📂 تحميل</button> <button onclick="deleteRecord(${idx})" style="background:#dc3545;color:white;">🗑️ حذف</button>㠯</tr>`; });
+    html += '</table>'; container.innerHTML = html; updateArchiveSelect();
+  }
+
+  function updateArchiveSelect() {
+    let select = document.getElementById('archiveSelect');
+    select.innerHTML = '<option value="">-- اختر استمارة --</option>';
+    archiveList.forEach((item, idx) => { select.innerHTML += `<option value="${idx}">${idx+1}. ${item.plateNumbers ? '4/'+item.plateNumbers : '-'} - ${item.fullName || 'بدون اسم'} (${item.savedAt})</option>`; });
+    document.getElementById('currentIndexDisplay').innerHTML = archiveList.length ? `📌 ${currentIndex+1} / ${archiveList.length}` : '📌 لا توجد استمارات';
+  }
+
+  function selectFormFromList() { let idx = parseInt(document.getElementById('archiveSelect').value); if (!isNaN(idx)) { currentIndex = idx; restoreForm(currentIndex); updateArchiveSelect(); } }
+  function previousForm() { if (!archiveList.length) return; currentIndex--; if (currentIndex < 0) currentIndex = archiveList.length - 1; restoreForm(currentIndex); updateArchiveSelect(); }
+  function nextForm() { if (!archiveList.length) return; currentIndex++; if (currentIndex >= archiveList.length) currentIndex = 0; restoreForm(currentIndex); updateArchiveSelect(); }
+  function deleteRecord(index) { if (confirm('حذف؟')) { let archive = JSON.parse(localStorage.getItem('officialArchive')) || []; archive.splice(index, 1); localStorage.setItem('officialArchive', JSON.stringify(archive)); loadArchive(); if (archive.length) restoreForm(0); currentIndex = 0; } }
+  function searchArchive() { let term = document.getElementById('searchInput').value.toLowerCase().trim(); if (!term) { displayArchive(allArchiveData); return; } let filtered = allArchiveData.filter(item => { if (searchType === 'plate') return (item.plateNumbers || '').includes(term); if (searchType === 'name') return (item.fullName || '').toLowerCase().includes(term); if (searchType === 'id') return (item.idNumber || '').includes(term); return false; }); displayArchive(filtered); }
+  function clearSearch() { document.getElementById('searchInput').value = ''; displayArchive(allArchiveData); updateArchiveSelect(); }
+  function displayArchive(archive) { let container = document.getElementById('archiveList'); if (!archive.length) { container.innerHTML = '<p>لا نتائج</p>'; return; } let html = '<table><th>التاريخ</th><th>رقم اللوحة</th><th>اسم المالك</th><th>رقم الهوية</th><th>استرجاع</th></tr>'; archive.forEach((item, idx) => { html += `<tr>晚${item.savedAt}㠯晚${item.plateNumbers ? '4/'+item.plateNumbers : '-'}㠯晚${item.fullName || '-'}㠯晚${item.idNumber || '-'}㠯/<button onclick="restoreForm(${idx})">📂 تحميل</button>㠯</tr>`; }); html += '<table>'; container.innerHTML = html; }
+  function exportArchive() { let archive = JSON.parse(localStorage.getItem('officialArchive')) || []; if (!archive.length) { alert('لا توجد استمارات'); return; } let blob = new Blob([JSON.stringify(archive, null, 2)], {type: 'application/json'}); let link = document.createElement('a'); link.download = `ارشيف_${new Date().toLocaleDateString()}.json`; link.href = URL.createObjectURL(blob); link.click(); alert('✅ تم التصدير'); }
+  function importArchive(input) { let file = input.files[0]; if (!file) return; let reader = new FileReader(); reader.onload = e => { try { let data = JSON.parse(e.target.result); if (Array.isArray(data)) { localStorage.setItem('officialArchive', JSON.stringify(data)); loadArchive(); alert('✅ تم الاستيراد'); } else alert('ملف غير صالح'); } catch(err) { alert('خطأ'); } }; reader.readAsText(file); input.value = ''; }
+  function deleteAllArchive() { if (confirm('مسح الكل؟')) { localStorage.removeItem('officialArchive'); loadArchive(); } }
+
+  loadArchive();
+  renderVinBoxes('');
+  setSearchType('plate');
+</script>
+</body>
+</html>
