@@ -1,0 +1,23 @@
+{
+  "name": "نظام مرور تعز",
+  "short_name": "مرور تعز",
+  "description": "إدارة استمارات فحص المركبات - تعز",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1a73e8",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://via.placeholder.com/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
